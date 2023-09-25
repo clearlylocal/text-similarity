@@ -13,43 +13,12 @@ type Payload = {
 	}
 }
 
-const source = 'That is a happy person'
-const targets = `
+const { source, targets: _targets } = JSON.parse(await Deno.readTextFile('./input.json')) as {
+	source: string
+	targets: string[]
+}
 
-1. That is a happy person
-1. Esa es una persona feliz
-1. 那是一位开心的人
-
-2. [that] is a happy person
-2. [esa] es una persona feliz
-2. 那是一位【開心】的人
-
-3. [This] is a happy person
-3. [Esta] es una persona feliz
-3. 【这】是一位开心的人
-
-4. That is a [very] happy person
-4. Esa es una persona [muy] feliz
-4. 那是一位【非常】开心的人
-
-5. That is an [unhappy] person
-5. Esa es una persona [infeliz]
-5. 那是一位【不开心】的人
-
-6. That is a [very unhappy] person
-6. Esa es una persona [muy infeliz]
-6. 那是一位【非常不开心】的人
-
-7. That is [not] a happy person
-7. Esa [no] es una persona feliz
-7. 那【不】是一位开心的人
-
-8. That is a happy [dog]
-8. Ese es un [perro] feliz
-8. 那是一条开心的【狗】
-
-`
-	.split('\n')
+const targets = _targets
 	.map((x) => x.trim())
 	.filter(Boolean)
 
@@ -68,7 +37,7 @@ async function query({ source, targets }: Params) {
 	const payload: Payload = {
 		inputs: {
 			source_sentence: source,
-			sentences: targets.map((t) => t.replaceAll(/^\d+\. |[\[\]【】]/gmu, '')),
+			sentences: targets.map((t) => t.replaceAll(/^\d+\. |[\[\]【】]/gu, '')),
 		},
 	}
 
