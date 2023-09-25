@@ -1,8 +1,9 @@
 import 'std/dotenv/load.ts'
 import { retry } from 'std/async/retry.ts'
+import { green, stripAnsiCode, yellow } from 'std/fmt/colors.ts'
 
 const API_TOKEN = Deno.env.get('API_TOKEN')
-const API_ROOT_URL = 'https://api-inference.huggingface.co/'
+const API_ROOT_URL = Deno.env.get('API_ROOT_URL')
 
 const url = new URL('models/sentence-transformers/stsb-xlm-r-multilingual', API_ROOT_URL)
 
@@ -63,19 +64,28 @@ async function query({ source, targets }: Params) {
 
 const r = await query({ source, targets })
 
+function fmtPrimitive(x: string | number, type?: 'string' | 'number') {
+	const t = type ?? typeof x
+	return (t === 'string' ? green : yellow)((t === 'string' ? JSON.stringify : String)(x))
+}
+
 function format(r: Awaited<ReturnType<typeof query>>) {
 	const entries = Object.entries(r.results)
 
 	return `{
-	"source": ${JSON.stringify(r.source)},
-	"results": [\n${
-		entries.map(([k, v]) => `\t\t[${v.toFixed(3)}, ${JSON.stringify(k)}],`)
-			.join('\n')
+	${fmtPrimitive('source')}: ${fmtPrimitive(r.source)},
+	${fmtPrimitive('results')}: [\n${
+		entries.map(([k, v], i) =>
+			`${i % 3 ? '' : '\n'}\t\t[${fmtPrimitive(v.toFixed(3), 'number')}, ${fmtPrimitive(k)}],`
+		)
+			.join('\n').slice(1)
 	}\n\t],
-}`
+}
+`
 }
 
-await Deno.writeTextFile('results.jsonc', format(r))
+const formatted = format(r)
 
-console.info(r)
+console.info(formatted)
+await Deno.writeTextFile('results.jsonc', stripAnsiCode(formatted))
 console.info('Done')

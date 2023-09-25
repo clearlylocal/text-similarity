@@ -1,23 +1,51 @@
+from flask import Flask, request, Response
+from flask_cors import CORS
+import logging
 from sentence_transformers import SentenceTransformer, util
 import time
 import json
-import re
 
-model = SentenceTransformer('sentence-transformers/stsb-xlm-r-multilingual')
+model_name = 'sentence-transformers/stsb-xlm-r-multilingual'
+model = SentenceTransformer(model_name)
 
-data = json.loads(open('./input.json', 'r').read())
+min_log_level = logging.ERROR
 
-source = data['source']
-targets = [re.sub(r'^\d+\. |[\[\]【】]', '', x) for x in data['targets']]
+# logger used by flask
+logger = logging.getLogger('werkzeug')
+logger.setLevel(min_log_level)
 
-start_time = time.time()
+def print(data):
+	logger.log(min_log_level, data)
 
-source_embeddings = model.encode([source], convert_to_tensor=True)
-target_embeddings = model.encode(targets, convert_to_tensor=True)
+app = Flask(__name__)
+CORS(app)
 
-cosine_scores = util.cos_sim(source_embeddings, target_embeddings)
+@app.route('/')
+def home():
+	return Response(response='ok', status=200)
 
-for i in range(len(targets)):
-	print("{} \t\t {} \t\t Score: {:.4f}".format(source, targets[i], cosine_scores[0][i]))
+@app.route(f'/models/{model_name}', methods = ['POST'])
+def lemmatize():
+	body = request.get_json()
 
-print("--- %s seconds ---" % (time.time() - start_time))
+	inputs = body['inputs']
+	source = inputs['source_sentence']
+	targets = inputs['sentences']
+
+	start_time = time.time()
+
+	source_embeddings = model.encode([source], convert_to_tensor=True)
+	target_embeddings = model.encode(targets, convert_to_tensor=True)
+
+	cosine_scores = util.cos_sim(source_embeddings, target_embeddings)
+
+	print(f'--- {time.time() - start_time} seconds ---')
+
+	return Response(
+		response=json.dumps(cosine_scores[0].tolist()),
+		status=200,
+		mimetype='application/json',
+	)
+
+if __name__ == '__main__':
+	app.run()

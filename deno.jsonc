@@ -13,7 +13,9 @@
 		"indentWidth": 4,
 		"singleQuote": true,
 		"proseWrap": "preserve",
-		"exclude": []
+		"exclude": [
+			"./results.jsonc"
+		]
 	},
 	"compilerOptions": {
 		"strict": true
