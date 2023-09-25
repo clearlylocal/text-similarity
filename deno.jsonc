@@ -1,0 +1,21 @@
+{
+	"lock": false,
+	"tasks": {
+		"start": "deno run -A --watch main.ts"
+	},
+	"imports": {
+		"std/": "https://deno.land/std@0.202.0/"
+	},
+	"fmt": {
+		"semiColons": false,
+		"useTabs": true,
+		"lineWidth": 120,
+		"indentWidth": 4,
+		"singleQuote": true,
+		"proseWrap": "preserve",
+		"exclude": []
+	},
+	"compilerOptions": {
+		"strict": true
+	}
+}
